@@ -19,28 +19,24 @@ class Tree():
         self.isLeaf = False
         self.predictedVal = None
 
-def calc_entropy(pos, neg):
-    e1 = 0
-    if pos != 0:
-        e1 = (float(pos)/(pos + neg)) * math.log(float(pos)/(pos + neg), 2)
+def calc_gini(pos, neg):
+    g = 0
+    if pos != 0 and neg != 0:
+        g = 1 - ((float(pos)/float(pos + neg))**2 + (float(pos)/float(pos + neg))**2)
 
-    e2 = 0
-    if neg != 0:
-        e2 = (float(neg)/(pos + neg)) * math.log(float(neg)/(pos + neg), 2)
+    return g
 
-    return -(e1 + e2)
-
-def find_split(attribute, label, parent_entropy):
-    max_inf_gain = 0
-    mean_split_for_max_gain = 0
+def find_split(attribute, label):
+    min_gini = float("inf")
+    mean_split_for_min_gini = 0
 
     rows = attribute.shape[0]
 
     min_attr = min(attribute)
     max_attr = max(attribute)
 
-    inc = (max_attr - min_attr)/float(9)
-    for i in range(9):
+    inc = (max_attr - min_attr)/float(15)
+    for i in range(15):
         mean_split = min_attr + inc * i
         p1 = 0
         p2 = 0
@@ -59,19 +55,19 @@ def find_split(attribute, label, parent_entropy):
                 else:
                     n2 = n2 + 1
 
-        entropy_from_current_split = 0
-        e1 = calc_entropy(p1, n1)
-        e2 = calc_entropy(p2, n2)
+        gini_from_current_split = 0
+        g1 = calc_gini(p1, n1)
+        g2 = calc_gini(p2, n2)
 
         if (p1 + n1 + p2 + n2) != 0:
-            entropy_from_current_split = (float(p1 + n1)/(p1 + n1 + p2 + n2)) * e1 + (float(p2 + n2)/(p1 + n1 + p2 + n2)) * e2
+            gini_from_current_split = (float(p1 + n1)/float(p1 + n1 + p2 + n2)) * g1 + (float(p2 + n2)/float(p1 + n1 + p2 + n2)) * g2
 
-        if max_inf_gain < (parent_entropy - entropy_from_current_split):
-            max_inf_gain = parent_entropy - entropy_from_current_split
-            mean_split_for_max_gain = mean_split
+        if min_gini > (gini_from_current_split):
+            min_gini = gini_from_current_split
+            mean_split_for_min_gini = mean_split
     
     # Return maximum info gain for the current attribute and split
-    return mean_split_for_max_gain, max_inf_gain
+    return mean_split_for_min_gini, min_gini
 
 def run_split(node, data):
     p = 0
@@ -85,25 +81,25 @@ def run_split(node, data):
         else:
             n = n + 1
 
-    e = calc_entropy(p, n)
-    if e == 0 or columns == 1:
+    g = calc_gini(p, n)
+    if g == 0 or columns == 1:
         node.isLeaf = True
-        if p == max(p, n):
-            node.predictedVal = 1
-        else:
+        if n == max(p, n):
             node.predictedVal = 0
+        else:
+            node.predictedVal = 1
         return
 
     mean_attr_list = []
-    inf_gain_attr_list = []
+    min_gini_list = []
 
     for i in range(columns - 1):
-        x, y = find_split(data[:, i], data[:, -1], e)
+        x, y = find_split(data[:, i], data[:, -1])
         mean_attr_list.append(x)
-        inf_gain_attr_list.append(y)
+        min_gini_list.append(y)
     
-    max_inf_gain = max(inf_gain_attr_list)
-    attr = inf_gain_attr_list.index(max_inf_gain)
+    max_inf_gain = min(min_gini_list)
+    attr = min_gini_list.index(max_inf_gain)
     mean_split = mean_attr_list[attr]
 
     node.attrValue = attr
@@ -134,6 +130,7 @@ def run_split(node, data):
     data_right = np.array(data_right)
     if data_right.shape[0] != 0:
         data_right = np.delete(data_right, attr, axis=1)
+    # print data_right.shape
 
     if data_left.shape[0] != 0:
         run_split(node.leftNode, data_left)
@@ -168,7 +165,7 @@ def printTree(node):
         printTree(node.leftNode)
         printTree(node.rightNode)
 
-def predictor(node, r):
+def classifier(node, r):
     if node.isLeaf:
         return node.predictedVal
     
@@ -177,8 +174,8 @@ def predictor(node, r):
     del_row = np.delete(del_row, node.attrValue)
 
     if attr_value <= node.mean_split:
-        return predictor(node.leftNode, del_row)
-    return predictor(node.rightNode, del_row)
+        return classifier(node.leftNode, del_row)
+    return classifier(node.rightNode, del_row)
 
 def run_decision_tree():
     # Load data set
@@ -187,8 +184,7 @@ def run_decision_tree():
         data = [tuple(line) for line in csv.reader(f, delimiter=",")]
 
     data = np.array(list(data)).astype("float")
-    # print data
-    print "Number of records: %d" % len(data)
+    # print "Number of records: %d" % len(data)
 
     # Split training/test sets
     # You need to modify the following code for cross validation.
@@ -212,7 +208,7 @@ def run_decision_tree():
         # Classify the test set using the tree we just constructed
         results = []
         for instance in test_set:
-            result = predictor(root, instance[:-1])
+            result = classifier(root, instance[:-1])
             results.append( result == instance[-1])
 
         # Accuracy
@@ -221,7 +217,7 @@ def run_decision_tree():
         avg_accuracy += accuracy      
         
         # Writing results to a file (DO NOT CHANGE)
-        f = open(myname+"result.txt", "a")
+        f = open(myname+"result-gini.txt", "a")
         f.write(str(j + 1) + " epoch\n")
         f.write("accuracy: %.4f" % accuracy)
         f.write("\n")
@@ -229,6 +225,7 @@ def run_decision_tree():
     avg_accuracy /= K
     print "average accuracy: %.4f" % avg_accuracy
     f.write("average accuracy: %.4f" % avg_accuracy)
+    f.write("\n")
     f.close()
 
 if __name__ == "__main__":
