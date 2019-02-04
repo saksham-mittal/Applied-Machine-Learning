@@ -22,7 +22,7 @@ class Tree():
 def calc_gini(pos, neg):
     g = 0
     if pos != 0 and neg != 0:
-        g = 1 - ((float(pos)/float(pos + neg))**2 + (float(pos)/float(pos + neg))**2)
+        g = 1 - ((float(pos)/float(pos + neg))**2 + (float(neg)/float(pos + neg))**2)
 
     return g
 
@@ -82,7 +82,7 @@ def run_split(node, data):
             n = n + 1
 
     g = calc_gini(p, n)
-    if g == 0 or columns == 1:
+    if g <= 0.02 or columns == 1:
         node.isLeaf = True
         if n == max(p, n):
             node.predictedVal = 0
@@ -218,13 +218,13 @@ def run_decision_tree():
         
         # Writing results to a file (DO NOT CHANGE)
         f = open(myname+"result-gini.txt", "a")
-        f.write(str(j + 1) + " epoch\n")
-        f.write("accuracy: %.4f" % accuracy)
-        f.write("\n")
+        # f.write(str(j + 1) + " epoch\n")
+        # f.write("accuracy: %.4f" % accuracy)
+        # f.write("\n")
     
     avg_accuracy /= K
     print "average accuracy: %.4f" % avg_accuracy
-    f.write("average accuracy: %.4f" % avg_accuracy)
+    f.write("accuracy: %.4f" % avg_accuracy)
     f.write("\n")
     f.close()
 

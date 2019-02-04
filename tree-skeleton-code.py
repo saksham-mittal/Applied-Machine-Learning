@@ -39,8 +39,8 @@ def find_split(attribute, label, parent_entropy):
     min_attr = min(attribute)
     max_attr = max(attribute)
 
-    inc = (max_attr - min_attr)/float(9)
-    for i in range(9):
+    inc = (max_attr - min_attr)/float(15)
+    for i in range(15):
         mean_split = min_attr + inc * i
         p1 = 0
         p2 = 0
@@ -222,13 +222,14 @@ def run_decision_tree():
         
         # Writing results to a file (DO NOT CHANGE)
         f = open(myname+"result.txt", "a")
-        f.write(str(j + 1) + " epoch\n")
-        f.write("accuracy: %.4f" % accuracy)
-        f.write("\n")
+        # f.write(str(j + 1) + " epoch\n")
+        # f.write("accuracy: %.4f" % accuracy)
+        # f.write("\n")
     
     avg_accuracy /= K
     print "average accuracy: %.4f" % avg_accuracy
     f.write("average accuracy: %.4f" % avg_accuracy)
+    f.write("\n")
     f.close()
 
 if __name__ == "__main__":
