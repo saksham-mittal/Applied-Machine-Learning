@@ -64,22 +64,21 @@ X_test = scaler.transform(X_test)
 print "Finished scaling"
 
 from sklearn.neighbors import KNeighborsClassifier
-for i in range(50, 110, 10):
-    classifier = KNeighborsClassifier(i)
-    
-    classifier.fit(X_train, labels) 
-    print "Train data fitted"
+classifier = KNeighborsClassifier(40)
 
-    y_pred = classifier.predict(X_test)
-    print "Data predicted"
+classifier.fit(X_train, labels) 
+print "Train data fitted"
 
-    text_file = open("Output_{}.csv".format(i), "w")
-    text_file.write("id,cuisine\n")
-    
-    count = 0
-    for elem in id_list:
-        text_file.write("%d,%s\n" % (elem, y_pred[count]) )
-        count += 1
+y_pred = classifier.predict(X_test)
+print "Data predicted"
 
-    text_file.close()
-    print "Data written to csv"
+text_file = open("Output_kNN.csv", "w")
+text_file.write("id,cuisine\n")
+
+count = 0
+for elem in id_list:
+    text_file.write("%d,%s\n" % (elem, y_pred[count]) )
+    count += 1
+
+text_file.close()
+print "Data written to csv"
